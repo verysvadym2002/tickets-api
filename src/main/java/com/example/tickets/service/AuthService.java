@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
+import com.example.tickets.entity.Role;
 
 @Service
 @Transactional
@@ -51,6 +52,7 @@ public class AuthService {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.getRoles().add(Role.ROLE_USER);
         userRepo.save(user);
     }
 
@@ -62,8 +64,12 @@ public class AuthService {
         } catch (AuthenticationException e) {
             throw new UnauthorizedException("Invalid credentials");
         }
-        String token = jwtService.generateToken(request.getUsername());
+        User user = userRepo.findByUsername(request.getUsername())
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+
+        String token = jwtService.generateToken(user);
         return new AuthResponse(token);
+
     }
 
     public void changePassword(ChangePasswordRequest req) {

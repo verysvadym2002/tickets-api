@@ -23,11 +23,14 @@ public class TicketService {
     private final TicketRepository ticketRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final TicketHistoryService historyService;
 
-    public TicketService(TicketRepository ticketRepository, ProjectRepository projectRepository, UserRepository userRepository) {
+    public TicketService(TicketRepository ticketRepository, ProjectRepository projectRepository, UserRepository userRepository,
+                         TicketHistoryService historyService) {
         this.ticketRepository = ticketRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
+        this.historyService = historyService;
     }
 
     private User currentUser() {
@@ -85,6 +88,11 @@ public class TicketService {
         if (req.getType() != null) t.setType(req.getType());
         if (req.getPriority() != null) t.setPriority(req.getPriority());
         if (req.getState() != null) t.setState(req.getState());
+        if (req.getState() != null && !req.getState().equals(t.getState())) {
+            historyService.saveChange(t, currentUser(), "state", t.getState().name(), req.getState().name());
+            t.setState(req.getState());
+        }
+
 
         return toDto(ticketRepository.save(t));
     }
@@ -99,4 +107,5 @@ public class TicketService {
     private TicketResponse toDto(Ticket t) {
         return new TicketResponse(t.getId(), t.getTitle(), t.getType(), t.getPriority(), t.getState(), t.getProject().getId());
     }
+
 }
