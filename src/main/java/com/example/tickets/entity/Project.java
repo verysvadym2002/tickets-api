@@ -32,4 +32,7 @@ public class Project {
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ticket> tickets = new ArrayList<>();
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Attachment> attachments = new ArrayList<>();
 }
