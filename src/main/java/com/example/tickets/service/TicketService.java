@@ -52,6 +52,13 @@ public class TicketService {
         if (req.getPriority() != null) t.setPriority(req.getPriority());
         if (req.getState() != null) t.setState(req.getState());
         t.setProject(project);
+
+        if (req.getAssigneeId() != null) {
+            User assignee = userRepository.findById(req.getAssigneeId())
+                    .orElseThrow(() -> new NotFoundException("Assignee not found"));
+            t.setAssignee(assignee);
+        }
+
         Ticket saved = ticketRepository.save(t);
         return toDto(saved);
     }
@@ -76,6 +83,13 @@ public class TicketService {
         if (req.getType() != null) t.setType(req.getType());
         if (req.getPriority() != null) t.setPriority(req.getPriority());
         if (req.getState() != null) t.setState(req.getState());
+
+        if (req.getAssigneeId() != null) {
+            User assignee = userRepository.findById(req.getAssigneeId())
+                    .orElseThrow(() -> new NotFoundException("Assignee not found"));
+            t.setAssignee(assignee);
+        }
+
         return toDto(ticketRepository.save(t));
     }
 
@@ -84,17 +98,54 @@ public class TicketService {
         Ticket t = ticketRepository.findByIdAndProject(ticketId, project)
                 .orElseThrow(() -> new NotFoundException("Ticket not found or not accessible"));
 
-        if (req.getTitle() != null) t.setTitle(req.getTitle());
-        if (req.getType() != null) t.setType(req.getType());
-        if (req.getPriority() != null) t.setPriority(req.getPriority());
-        if (req.getState() != null) t.setState(req.getState());
-        if (req.getState() != null && !req.getState().equals(t.getState())) {
-            historyService.saveChange(t, currentUser(), "state", t.getState().name(), req.getState().name());
+        User cu = currentUser(); // zlepší čitelnost
+
+        // TITLE
+        if (req.getTitle() != null && !req.getTitle().equals(t.getTitle())) {
+            historyService.saveChange(t, cu, "title", t.getTitle(), req.getTitle());
+            t.setTitle(req.getTitle());
+        }
+
+        // TYPE
+        if (req.getType() != null && req.getType() != t.getType()) {
+            historyService.saveChange(t, cu, "type",
+                    t.getType() == null ? "none" : t.getType().name(),
+                    req.getType().name());
+            t.setType(req.getType());
+        }
+
+        // PRIORITY
+        if (req.getPriority() != null && req.getPriority() != t.getPriority()) {
+            historyService.saveChange(t, cu, "priority",
+                    t.getPriority() == null ? "none" : t.getPriority().name(),
+                    req.getPriority().name());
+            t.setPriority(req.getPriority());
+        }
+
+        // STATE
+        if (req.getState() != null && req.getState() != t.getState()) {
+            historyService.saveChange(t, cu, "state",
+                    t.getState().name(), req.getState().name());
             t.setState(req.getState());
         }
 
+        // ASSIGNEE
+        if (req.getAssigneeId() != null) {
+            User newAssignee = userRepository.findById(req.getAssigneeId())
+                    .orElseThrow(() -> new NotFoundException("Assignee not found"));
 
-        return toDto(ticketRepository.save(t));
+            Long oldId = t.getAssignee() != null ? t.getAssignee().getId() : null;
+
+            if (!req.getAssigneeId().equals(oldId)) {
+                historyService.saveChange(t, cu, "assignee",
+                        t.getAssignee() == null ? "none" : t.getAssignee().getUsername(),
+                        newAssignee.getUsername());
+                t.setAssignee(newAssignee);
+            }
+        }
+
+        ticketRepository.save(t);
+        return toDto(t);
     }
 
     public void delete(Long projectId, Long ticketId) {
@@ -105,7 +156,15 @@ public class TicketService {
     }
 
     private TicketResponse toDto(Ticket t) {
-        return new TicketResponse(t.getId(), t.getTitle(), t.getType(), t.getPriority(), t.getState(), t.getProject().getId());
+        return new TicketResponse(
+                t.getId(),
+                t.getTitle(),
+                t.getType(),
+                t.getPriority(),
+                t.getState(),
+                t.getProject().getId(),
+                t.getAssignee() != null ? t.getAssignee().getId() : null,
+                t.getAssignee() != null ? t.getAssignee().getUsername() : null
+        );
     }
-
 }

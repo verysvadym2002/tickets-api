@@ -15,4 +15,6 @@ public class TicketResponse {
     private TicketPriority priority;
     private TicketState state;
     private Long projectId;
+    private Long assigneeId;
+    private String assigneeUsername;
 }

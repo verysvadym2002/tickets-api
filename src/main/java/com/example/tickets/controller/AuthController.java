@@ -47,7 +47,12 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<User> me() {
-        return ResponseEntity.ok(svc.getCurrentUser());
+    public ResponseEntity<UserResponse> me() {
+        User u = svc.getCurrentUser();
+        return ResponseEntity.ok(new UserResponse(
+                u.getId(),
+                u.getUsername(),
+                u.getEmail()
+        ));
     }
 }

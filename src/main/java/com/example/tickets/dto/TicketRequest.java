@@ -16,4 +16,5 @@ public class TicketRequest {
     private TicketType type;
     private TicketPriority priority;
     private TicketState state;
+    private Long assigneeId;
 }

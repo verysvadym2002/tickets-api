@@ -2,6 +2,9 @@ package com.example.tickets.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
+import java.util.List;
+import java.util.ArrayList;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -32,4 +35,14 @@ public class Ticket {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
+
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "ticket", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TicketHistory> history = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id")
+    private User assignee;
 }
